@@ -25,7 +25,7 @@ const models = [
 
 const chatModes = [
   { id: 'chatbot', name: 'Chat Bot', description: 'Single AI assistant' },
-  { id: 'group', name: 'Group AI Chat', description: 'Multiple AI assistants' },
+  { id: 'group', name: 'Group Chat', description: 'Multiple AI assistants' },
   { id: 'debate', name: 'AI Debate', description: 'Two AIs debate a topic' },
 ];
 
@@ -87,9 +87,9 @@ export function ChatInterface({ chatMode, onChatModeChange }: ChatInterfaceProps
             <div className="p-2 rounded-lg bg-primary/10">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
-            <div>
+            <div className="flex items-center gap-3">
               <Select value={chatMode} onValueChange={onChatModeChange}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-64">
                   <SelectValue>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{chatModes.find(m => m.id === chatMode)?.name}</span>
@@ -110,13 +110,13 @@ export function ChatInterface({ chatMode, onChatModeChange }: ChatInterfaceProps
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">Powered by PyPoe</p>
+              <span className="text-sm text-muted-foreground font-medium">Select Chat Mode</span>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
             <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-52">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
