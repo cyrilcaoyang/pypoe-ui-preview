@@ -10,14 +10,30 @@ import {
   Bot,
   Activity,
   FileText,
-  Terminal
+  Terminal,
+  Users,
+  Gavel
 } from 'lucide-react';
 
-const conversations = [
-  { id: '1', title: 'Quantum Computing Basics', model: 'GPT-4', time: '2m ago' },
-  { id: '2', title: 'Python Data Analysis', model: 'Claude', time: '1h ago' },
-  { id: '3', title: 'Machine Learning Concepts', model: 'Gemini', time: '3h ago' },
-];
+interface SidebarProps {
+  chatMode: string;
+}
+
+const conversationsByMode = {
+  chatbot: [
+    { id: '1', title: 'Quantum Computing Basics', model: 'GPT-4', time: '2m ago' },
+    { id: '2', title: 'Python Data Analysis', model: 'Claude', time: '1h ago' },
+    { id: '3', title: 'Machine Learning Concepts', model: 'Gemini', time: '3h ago' },
+  ],
+  group: [
+    { id: '4', title: 'Team Brainstorm Session', models: ['GPT-4', 'Claude'], time: '1h ago' },
+    { id: '5', title: 'Code Review Discussion', models: ['GPT-4', 'Gemini'], time: '3h ago' },
+  ],
+  debate: [
+    { id: '6', title: 'AI Ethics Debate', models: ['GPT-4 vs Claude'], time: '2h ago' },
+    { id: '7', title: 'Climate Change Discussion', models: ['Claude vs Gemini'], time: '1d ago' },
+  ]
+};
 
 const stats = [
   { label: 'Total Chats', value: '127', icon: MessageSquare },
@@ -25,9 +41,26 @@ const stats = [
   { label: 'Models Used', value: '8', icon: Bot },
 ];
 
-export function Sidebar() {
+export function Sidebar({ chatMode }: SidebarProps) {
+  const conversations = conversationsByMode[chatMode as keyof typeof conversationsByMode] || [];
+  
+  const getModeIcon = (mode: string) => {
+    switch (mode) {
+      case 'group': return Users;
+      case 'debate': return Gavel;
+      default: return MessageSquare;
+    }
+  };
+  
+  const getModeColor = (mode: string) => {
+    switch (mode) {
+      case 'group': return 'bg-blue-500/10';
+      case 'debate': return 'bg-purple-500/10';
+      default: return 'bg-background/30';
+    }
+  };
   return (
-    <div className="w-80 h-full bg-background/30 backdrop-blur-sm border-r border-border flex flex-col">
+    <div className={`w-80 h-full backdrop-blur-sm border-r border-border flex flex-col ${getModeColor(chatMode)}`}>
       {/* User Profile */}
       <div className="p-4 border-b border-border">
         <Card className="p-3 card-glow">
@@ -76,7 +109,7 @@ export function Sidebar() {
                   <p className="text-sm font-medium truncate">{conv.title}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="outline" className="text-xs">
-                      {conv.model}
+                      {'model' in conv ? conv.model : 'models' in conv ? conv.models.join(', ') : 'Unknown'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">{conv.time}</span>
                   </div>

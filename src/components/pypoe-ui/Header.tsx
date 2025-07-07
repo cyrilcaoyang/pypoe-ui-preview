@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Github, Settings, Zap, WifiOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Github, Settings, Zap, WifiOff, Sun, Moon } from 'lucide-react';
 import accelerationLogo from '@/assets/acceleration-consortium-logo.png';
 
 export function Header() {
@@ -8,7 +9,14 @@ export function Header() {
   const isConnected = true;
   const ipAddresses = {
     primary: "100.64.254.123:5000",
-    secondary: "172.32.45.67"
+    secondary: "172.32.45.67:5000"
+  };
+
+  // Theme state - replace with actual theme management
+  const isDarkMode = false;
+  const toggleTheme = () => {
+    // Add theme toggle logic here
+    console.log('Toggle theme');
   };
 
   return (
@@ -49,6 +57,14 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              <Switch
+                checked={isDarkMode}
+                onCheckedChange={toggleTheme}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
             <Button variant="ghost" size="icon">
               <Settings className="h-4 w-4" />
             </Button>

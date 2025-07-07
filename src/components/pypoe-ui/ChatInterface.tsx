@@ -13,13 +13,20 @@ import {
   Sparkles,
   Copy,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  ChevronDown
 } from 'lucide-react';
 
 const models = [
   { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI' },
   { id: 'claude-3', name: 'Claude 3', provider: 'Anthropic' },
   { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google' },
+];
+
+const chatModes = [
+  { id: 'chatbot', name: 'Chat Bot', description: 'Single AI assistant' },
+  { id: 'group', name: 'Group AI Chat', description: 'Multiple AI assistants' },
+  { id: 'debate', name: 'AI Debate', description: 'Two AIs debate a topic' },
 ];
 
 const sampleMessages = [
@@ -38,10 +45,17 @@ const sampleMessages = [
   }
 ];
 
-export function ChatInterface() {
+interface ChatInterfaceProps {
+  chatMode: string;
+  onChatModeChange: (mode: string) => void;
+}
+
+export function ChatInterface({ chatMode, onChatModeChange }: ChatInterfaceProps) {
   const [messages, setMessages] = useState(sampleMessages);
   const [inputValue, setInputValue] = useState('');
   const [selectedModel, setSelectedModel] = useState('gpt-4');
+  const [activeGroupBots, setActiveGroupBots] = useState(['gpt-4']);
+  const [debateModels, setDebateModels] = useState(['gpt-4', 'claude-3']);
 
   const handleSend = () => {
     if (!inputValue.trim()) return;
@@ -74,8 +88,29 @@ export function ChatInterface() {
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="font-semibold">AI Chat Interface</h2>
-              <p className="text-sm text-muted-foreground">Powered by PyPoe</p>
+              <Select value={chatMode} onValueChange={onChatModeChange}>
+                <SelectTrigger className="w-48">
+                  <SelectValue>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{chatModes.find(m => m.id === chatMode)?.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {chatModes.find(m => m.id === chatMode)?.description}
+                      </span>
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {chatModes.map((mode) => (
+                    <SelectItem key={mode.id} value={mode.id}>
+                      <div>
+                        <div className="font-medium">{mode.name}</div>
+                        <div className="text-xs text-muted-foreground">{mode.description}</div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Powered by PyPoe</p>
             </div>
           </div>
           
