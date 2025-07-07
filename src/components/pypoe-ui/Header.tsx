@@ -6,14 +6,14 @@ import accelerationLogo from '@/assets/acceleration-consortium-logo.png';
 
 export function Header() {
   // Mock connection state - replace with actual state management
-  const isConnected = true;
+  const isConnected = false;
   const ipAddresses = {
     primary: "100.64.254.123:5000",
     secondary: "172.32.45.67:5000"
   };
 
   // Theme state - replace with actual theme management
-  const isDarkMode = false;
+  const isDarkMode = true;
   const toggleTheme = () => {
     // Add theme toggle logic here
     console.log('Toggle theme');
