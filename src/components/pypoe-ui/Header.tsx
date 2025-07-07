@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Github, Settings, Zap, WifiOff, Sun, Moon } from 'lucide-react';
 import accelerationLogo from '@/assets/acceleration-consortium-logo.png';
+import lightThemeLogo from '@/assets/light-theme-logo.svg';
 import { useState, useEffect } from 'react';
 
 export function Header() {
@@ -39,8 +40,8 @@ export function Header() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <img 
-                src={accelerationLogo} 
-                alt="Acceleration Consortium Logo" 
+                src={isDarkMode ? accelerationLogo : lightThemeLogo} 
+                alt={isDarkMode ? "Acceleration Consortium Logo" : "Light Theme Logo"} 
                 className="h-10 w-auto object-contain"
               />
               <div>
