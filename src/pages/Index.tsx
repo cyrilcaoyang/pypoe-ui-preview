@@ -1,6 +1,6 @@
-import { Header } from '@/components/Header';
-import { Sidebar } from '@/components/Sidebar';
-import { ChatInterface } from '@/components/ChatInterface';
+import { Header } from '@/components/pypoe-ui/Header';
+import { Sidebar } from '@/components/pypoe-ui/Sidebar';
+import { ChatInterface } from '@/components/pypoe-ui/ChatInterface';
 
 const Index = () => {
   return (
