@@ -3,20 +3,33 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Github, Settings, Zap, WifiOff, Sun, Moon } from 'lucide-react';
 import accelerationLogo from '@/assets/acceleration-consortium-logo.png';
+import { useState, useEffect } from 'react';
 
 export function Header() {
-  // Mock connection state - replace with actual state management
-  const isConnected = false;
+  // Network connection states - replace with actual state management
+  const tailscaleConnected = true;
+  const compsciConnected = false;
   const ipAddresses = {
-    primary: "100.64.254.123:5000",
-    secondary: "172.32.45.67:5000"
+    tailscale: "100.64.254.123:5000",
+    compsci: "172.32.45.67:5000"
   };
 
-  // Theme state - replace with actual theme management
-  const isDarkMode = true;
+  // Theme state with actual functionality
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  
+  useEffect(() => {
+    // Apply theme to document
+    if (isDarkMode) {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+  }, [isDarkMode]);
+
   const toggleTheme = () => {
-    // Add theme toggle logic here
-    console.log('Toggle theme');
+    setIsDarkMode(!isDarkMode);
   };
 
   return (
@@ -36,23 +49,33 @@ export function Header() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge 
-                variant={isConnected ? "default" : "secondary"} 
-                className={`gap-1 ${isConnected ? 'bg-green-600 hover:bg-green-700' : 'bg-muted text-muted-foreground'}`}
-              >
-                {isConnected ? (
-                  <Zap className="h-3 w-3" />
+              {/* Tailscale Network */}
+              <div className="flex items-center gap-2">
+                {tailscaleConnected ? (
+                  <Badge className="gap-1 bg-green-600 hover:bg-green-700 text-white">
+                    <span className="text-xs font-medium">{ipAddresses.tailscale}</span>
+                  </Badge>
                 ) : (
-                  <WifiOff className="h-3 w-3" />
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <WifiOff className="h-3 w-3" />
+                    <span className="text-xs">tailscale</span>
+                  </div>
                 )}
-                {isConnected ? "Connected" : "Disconnected"}
-              </Badge>
-              {isConnected && (
-                <div className="text-xs text-muted-foreground">
-                  <div>{ipAddresses.primary}</div>
-                  <div>{ipAddresses.secondary}</div>
-                </div>
-              )}
+              </div>
+              
+              {/* Compsci Network */}
+              <div className="flex items-center gap-2">
+                {compsciConnected ? (
+                  <Badge className="gap-1 bg-green-600 hover:bg-green-700 text-white">
+                    <span className="text-xs font-medium">{ipAddresses.compsci}</span>
+                  </Badge>
+                ) : (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <WifiOff className="h-3 w-3" />
+                    <span className="text-xs">compsci</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
