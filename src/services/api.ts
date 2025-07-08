@@ -42,9 +42,27 @@ class PyPoeAPI {
   private credentials?: string;
 
   constructor(baseURL?: string, credentials?: string) {
-    // Allow configuration via environment variables or defaults
-    this.baseURL = baseURL || 'http://localhost:8000';
+    // Auto-detect backend URL based on environment
+    this.baseURL = baseURL || this.detectBackendURL();
     this.credentials = credentials;
+  }
+
+  private detectBackendURL(): string {
+    // Allow override via environment variable
+    if (import.meta.env.VITE_PYPOE_BACKEND_URL) {
+      return import.meta.env.VITE_PYPOE_BACKEND_URL;
+    }
+
+    // Auto-detect based on current host
+    const currentHost = window.location.hostname;
+    
+    if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+      // Local development - try Tailscale IP first, then localhost
+      return 'http://100.64.254.6:8000';
+    } else {
+      // Running on server - assume backend is on same host
+      return `http://${currentHost}:8000`;
+    }
   }
 
   private async request<T>(
@@ -194,7 +212,17 @@ class PyPoeAPI {
 }
 
 // Create singleton instance - will auto-detect backend URL
-export const pyPoeAPI = new PyPoeAPI();
+// Configure authentication credentials from environment variables
+// Set VITE_PYPOE_USERNAME and VITE_PYPOE_PASSWORD in .env.local (not committed to git)
+const username = import.meta.env.VITE_PYPOE_USERNAME;
+const password = import.meta.env.VITE_PYPOE_PASSWORD;
+
+if (!username || !password) {
+  console.warn('PyPoe authentication credentials not found. Please set VITE_PYPOE_USERNAME and VITE_PYPOE_PASSWORD in .env.local');
+}
+
+const credentials = username && password ? btoa(`${username}:${password}`) : undefined;
+export const pyPoeAPI = new PyPoeAPI(undefined, credentials);
 
 // Helper function to create API client with custom backend URL
 export const createPyPoeAPI = (backendURL: string, credentials?: string) => {
