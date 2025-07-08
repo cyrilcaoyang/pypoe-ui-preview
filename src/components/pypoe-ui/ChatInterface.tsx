@@ -50,6 +50,12 @@ export function ChatInterface({
   const [streamingMessage, setStreamingMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  
+  // Lock bot selection during active single-bot conversations
+  const isModelLocked = chatMode === 'chatbot' && 
+                       currentConversation && 
+                       messages.length > 0 && 
+                       messages.some(m => m.role === 'user');
   const [newChatTitle, setNewChatTitle] = useState('');
   const [newChatBot, setNewChatBot] = useState('');
 
@@ -361,8 +367,13 @@ export function ChatInterface({
           </div>
           
           <div className="flex items-center gap-2">
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="w-52">
+            {/* Lock bot selection during active single-bot conversations */}
+            <Select 
+              value={selectedModel} 
+              onValueChange={setSelectedModel}
+              disabled={isModelLocked}
+            >
+              <SelectTrigger className={`w-52 ${isModelLocked ? 'opacity-60 cursor-not-allowed' : ''}`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -373,6 +384,11 @@ export function ChatInterface({
                 ))}
               </SelectContent>
             </Select>
+            {isModelLocked && (
+              <div className="text-xs text-muted-foreground">
+                Bot locked for this conversation
+              </div>
+            )}
             <Button variant="ghost" size="icon">
               <Settings2 className="h-4 w-4" />
             </Button>

@@ -23,6 +23,7 @@ interface SidebarProps {
   chatMode: string;
   onConversationSelect?: (conversationId: string) => void;
   onNewConversation?: () => void;
+  onSettingsOpen?: () => void;
   selectedConversationId?: string;
 }
 

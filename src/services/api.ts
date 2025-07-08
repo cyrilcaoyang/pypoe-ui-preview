@@ -31,6 +31,27 @@ export interface ConversationStats {
   avg_messages_per_conversation: number;
 }
 
+export interface BackendConfig {
+  backend_version: string;
+  database_path: string;
+  authentication_enabled: boolean;
+  username?: string;
+  available_bots: string[];
+  total_bots: number;
+  api_endpoints: string[];
+  cors_enabled: boolean;
+  websocket_enabled: boolean;
+  features: {
+    real_time_streaming: boolean;
+    conversation_history: boolean;
+    multi_bot_support: boolean;
+    search_conversations: boolean;
+    authentication: boolean;
+    websocket_chat: boolean;
+    api_only_mode: boolean;
+  };
+}
+
 export interface HealthStatus {
   status: 'healthy' | 'unhealthy';
   version?: string;
@@ -160,6 +181,11 @@ class PyPoeAPI {
   // Stats
   async getStats(): Promise<ConversationStats> {
     return this.request<ConversationStats>('/api/stats');
+  }
+
+  // Configuration
+  async getConfig(): Promise<BackendConfig> {
+    return this.request<BackendConfig>('/api/config');
   }
 
   // WebSocket connection for real-time chat
