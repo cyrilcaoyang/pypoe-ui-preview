@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { Header } from '@/components/pypoe-ui/Header';
 import { Sidebar } from '@/components/pypoe-ui/Sidebar';
 import { ChatInterface } from '@/components/pypoe-ui/ChatInterface';
+import Settings from '@/components/Settings';
 import { pyPoeAPI } from '@/services/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const Index = () => {
   const [chatMode, setChatMode] = useState('chatbot');
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>(undefined);
   const [sidebarKey, setSidebarKey] = useState(0); // Force sidebar refresh
+  const [showSettings, setShowSettings] = useState(false);
 
   // Handle conversation selection from sidebar
   const handleConversationSelect = (conversationId: string) => {
@@ -25,6 +28,11 @@ const Index = () => {
     setSelectedConversationId(conversationId);
     // Refresh sidebar to show the new conversation
     setSidebarKey(prev => prev + 1);
+  };
+
+  // Handle settings modal
+  const handleSettingsOpen = () => {
+    setShowSettings(true);
   };
 
   // Test backend connection on mount
@@ -50,6 +58,7 @@ const Index = () => {
           chatMode={chatMode} 
           onConversationSelect={handleConversationSelect}
           onNewConversation={handleNewConversation}
+          onSettingsOpen={handleSettingsOpen}
           selectedConversationId={selectedConversationId}
         />
         <main className="flex-1">
@@ -61,6 +70,16 @@ const Index = () => {
           />
         </main>
       </div>
+      
+      {/* Settings Modal */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Settings & Backend Configuration</DialogTitle>
+          </DialogHeader>
+          <Settings />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

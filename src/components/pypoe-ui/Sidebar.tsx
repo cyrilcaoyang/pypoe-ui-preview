@@ -31,6 +31,7 @@ export function Sidebar({
   chatMode, 
   onConversationSelect, 
   onNewConversation,
+  onSettingsOpen,
   selectedConversationId 
 }: SidebarProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -257,7 +258,7 @@ export function Sidebar({
             <Terminal className="h-4 w-4" />
             CLI Version
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start">
+          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onSettingsOpen}>
             <Settings className="h-4 w-4" />
             Settings
           </Button>

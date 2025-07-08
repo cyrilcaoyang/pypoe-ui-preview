@@ -56,8 +56,11 @@ export function ChatInterface({
                        currentConversation && 
                        messages.length > 0 && 
                        messages.some(m => m.role === 'user');
+  
+  // New chat dialog state
   const [newChatTitle, setNewChatTitle] = useState('');
   const [newChatBot, setNewChatBot] = useState('');
+  const [newChatMode, setNewChatMode] = useState('chatbot');
 
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -243,6 +246,10 @@ export function ChatInterface({
       const response = await pyPoeAPI.createConversation(newChatTitle, newChatBot);
       setShowNewChatDialog(false);
       setNewChatTitle('');
+      setNewChatBot('');
+      
+      // Apply the selected chat mode for the new conversation
+      onChatModeChange(newChatMode);
       onConversationChange?.(response.conversation_id);
     } catch (err) {
       console.error('Failed to create conversation:', err);
@@ -261,71 +268,9 @@ export function ChatInterface({
     });
   };
 
-  if (!selectedConversationId) {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex-1 flex items-center justify-center">
-          <Card className="p-8 text-center max-w-md">
-            <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary" />
-            <h3 className="text-lg font-semibold mb-2">Welcome to PyPoe</h3>
-            <p className="text-muted-foreground mb-4">
-              Select a conversation from the sidebar or create a new one to start chatting with AI bots.
-            </p>
-            <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Conversation
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Conversation</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      value={newChatTitle}
-                      onChange={(e) => setNewChatTitle(e.target.value)}
-                      placeholder="Enter conversation title"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="bot">AI Bot</Label>
-                    <Select value={newChatBot} onValueChange={setNewChatBot}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a bot" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableBots.map((bot) => (
-                          <SelectItem key={bot} value={bot}>
-                            {bot}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button 
-                    onClick={handleCreateNewChat} 
-                    className="w-full"
-                    disabled={!newChatTitle.trim() || !newChatBot}
-                  >
-                    Create Conversation
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
+      {/* Header - Always visible */}
       <div className="border-b border-border p-4 bg-background/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -410,6 +355,208 @@ export function ChatInterface({
           </Button>
         </div>
       )}
+
+      {!selectedConversationId ? (
+        <div className="flex-1 flex items-center justify-center">
+          <Card className="p-8 text-center max-w-md">
+            <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary" />
+            <h3 className="text-lg font-semibold mb-2">Welcome to PyPoe</h3>
+            <p className="text-muted-foreground mb-4">
+              Select a conversation from the sidebar or create a new one to start chatting with AI bots.
+            </p>
+            <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Conversation
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Conversation</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      value={newChatTitle}
+                      onChange={(e) => setNewChatTitle(e.target.value)}
+                      placeholder="Enter conversation title"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="chatMode">Chat Mode</Label>
+                    <Select value={newChatMode} onValueChange={setNewChatMode}>
+                      <SelectTrigger>
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{chatModes.find(m => m.id === newChatMode)?.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {chatModes.find(m => m.id === newChatMode)?.description}
+                            </span>
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {chatModes.map((mode) => (
+                          <SelectItem key={mode.id} value={mode.id}>
+                            <div>
+                              <div className="font-medium">{mode.name}</div>
+                              <div className="text-xs text-muted-foreground">{mode.description}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="bot">AI Bot</Label>
+                    <Select value={newChatBot} onValueChange={setNewChatBot}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a bot" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableBots.map((bot) => (
+                          <SelectItem key={bot} value={bot}>
+                            {bot}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button 
+                    onClick={handleCreateNewChat} 
+                    className="w-full"
+                    disabled={!newChatTitle.trim() || !newChatBot}
+                  >
+                    Create Conversation
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </Card>
+        </div>
+      ) : (
+        <>
+          {/* Messages */}
+          <ScrollArea className="flex-1 p-4">
+            <div className="space-y-6">
+              {isLoading && messages.length === 0 ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Loading conversation...</span>
+                </div>
+              ) : (
+                <>
+                  {messages.map((message) => (
+                    <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      {message.role === 'assistant' && (
+                        <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                          <Bot className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                      
+                      <div className={`max-w-[80%] ${message.role === 'user' ? 'order-2' : ''}`}>
+                        <Card className={`p-4 ${message.role === 'user' ? 'bg-primary text-primary-foreground ml-auto' : 'bg-card'}`}>
+                          <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                            {message.content}
+                          </div>
+                          {message.role === 'assistant' && (
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {message.bot_name || selectedModel}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => copyToClipboard(message.content)}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <ThumbsUp className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <ThumbsDown className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </Card>
+                        {message.role === 'user' && (
+                          <div className="flex items-center justify-end gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {message.role === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-gradient-secondary flex items-center justify-center flex-shrink-0 order-3">
+                          <User className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Streaming message */}
+                  {streamingMessage && (
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-4 w-4 text-white" />
+                      </div>
+                      <Card className="p-4 bg-card max-w-[80%]">
+                        <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                          {streamingMessage}
+                          <span className="animate-pulse">|</span>
+                        </div>
+                      </Card>
+                    </div>
+                  )}
+                </>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+
+          {/* Input */}
+          <div className="border-t border-border p-4 bg-background/50 backdrop-blur-sm">
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={`Message ${selectedModel}...`}
+                  disabled={isLoading || !wsRef.current || isConnecting}
+                  className="pr-12"
+                />
+              </div>
+              <Button 
+                onClick={handleSend} 
+                disabled={!inputValue.trim() || isLoading || !wsRef.current || isConnecting}
+                size="icon"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              {currentConversation ? `Chatting with ${selectedModel} in "${currentConversation.title}"` : 'Select a conversation to start chatting'}
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  );
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
