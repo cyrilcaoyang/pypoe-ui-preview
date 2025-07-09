@@ -57,16 +57,25 @@ export interface BackendConfig {
       ip: string;
       frontend_url: string;
       backend_url: string;
+      status?: string;
     };
-    compsci?: {
+    compsci_vpn?: {
       ip: string;
       frontend_url: string;
       backend_url: string;
+      status?: string;
+    };
+    compsci_wifi?: {
+      ip: string;
+      frontend_url: string;
+      backend_url: string;
+      status?: string;
     };
     local?: {
       ip: string;
       frontend_url: string;
       backend_url: string;
+      status?: string;
     };
     error?: string;
   };
@@ -266,6 +275,15 @@ class PyPoeAPI {
   // Configuration
   async getConfig(): Promise<BackendConfig> {
     return this.request<BackendConfig>('/api/config');
+  }
+
+  // Network Status (dynamic detection)
+  async getNetworkStatus(): Promise<{
+    network_interfaces: BackendConfig['network_interfaces'];
+    total_interfaces: number;
+    timestamp: string;
+  }> {
+    return this.request('/api/network-status');
   }
 
   // WebSocket connection for real-time chat

@@ -13,6 +13,7 @@ export function Header() {
   const [networkInfo, setNetworkInfo] = useState({
     tailscaleConnected: false,
     compsciConnected: false,
+    compsciType: '', // 'vpn', 'wifi', or ''
     currentIP: '',
     tailscaleIP: '',
     compsciIP: ''
@@ -30,6 +31,7 @@ export function Header() {
       
       let isTailscale = false;
       let isCompsci = false;
+      let compsciType = '';
       let tailscaleIP = '';
       let compsciIP = '';
       
@@ -37,16 +39,22 @@ export function Header() {
       if (hostname.startsWith('100.64.')) {
         isTailscale = true;
         tailscaleIP = currentIP;
-      } else if (hostname.startsWith('172.31.') || hostname.startsWith('172.32.')) {
+      } else if (hostname.startsWith('172.29.')) {
         isCompsci = true;
+        compsciType = 'vpn';
+        compsciIP = currentIP;
+      } else if (hostname.startsWith('172.31.')) {
+        isCompsci = true;
+        compsciType = 'wifi';
         compsciIP = currentIP;
       } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
         // When accessing via localhost, get network info from backend
         try {
-          const config = await pyPoeAPI.getConfig();
-          const networkInterfaces = config.network_interfaces;
+          const networkStatus = await pyPoeAPI.getNetworkStatus();
+          const networkInterfaces = networkStatus.network_interfaces;
           
           console.log('Network interfaces from backend:', networkInterfaces);
+          console.log('Network detection timestamp:', networkStatus.timestamp);
           
           // Check Tailscale network
           if (networkInterfaces && networkInterfaces.tailscale) {
@@ -55,11 +63,22 @@ export function Header() {
             console.log(`Tailscale network available at ${networkInterfaces.tailscale.ip}`);
           }
           
-          // Check Compsci network
-          if (networkInterfaces && networkInterfaces.compsci) {
+          // Check Compsci networks - VPN takes priority over WiFi
+          if (networkInterfaces && networkInterfaces.compsci_vpn) {
             isCompsci = true;
-            compsciIP = networkInterfaces.compsci.frontend_url.replace('http://', '');
-            console.log(`Compsci network available at ${networkInterfaces.compsci.ip}`);
+            compsciType = 'vpn';
+            compsciIP = networkInterfaces.compsci_vpn.frontend_url.replace('http://', '');
+            console.log(`Compsci VPN network available at ${networkInterfaces.compsci_vpn.ip}`);
+          } else if (networkInterfaces && networkInterfaces.compsci_wifi) {
+            isCompsci = true;
+            compsciType = 'wifi';
+            compsciIP = networkInterfaces.compsci_wifi.frontend_url.replace('http://', '');
+            console.log(`Compsci WiFi network available at ${networkInterfaces.compsci_wifi.ip}`);
+          }
+          
+          // Show local network if available
+          if (networkInterfaces && networkInterfaces.local) {
+            console.log(`Local network available at ${networkInterfaces.local.ip}`);
           }
         } catch (error) {
           console.log('Failed to get network info from backend:', error);
@@ -71,18 +90,19 @@ export function Header() {
       setNetworkInfo({
         tailscaleConnected: isTailscale,
         compsciConnected: isCompsci,
+        compsciType: compsciType,
         currentIP,
         tailscaleIP: tailscaleIP || '',
         compsciIP: compsciIP || ''
       });
       
-      console.log('Network Status:', { isTailscale, isCompsci, tailscaleIP, compsciIP });
+      console.log('Network Status:', { isTailscale, isCompsci, compsciType, tailscaleIP, compsciIP });
     };
 
     detectNetwork();
     
-    // Re-check network status periodically
-    const interval = setInterval(detectNetwork, 30000); // Check every 30 seconds
+    // Re-check network status more frequently for dynamic updates
+    const interval = setInterval(detectNetwork, 10000); // Check every 10 seconds
     
     return () => clearInterval(interval);
   }, []);
@@ -147,8 +167,14 @@ export function Header() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Badge className="gap-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer">
-                      <span className="text-xs font-medium">{networkInfo.compsciIP}</span>
+                    <Badge className={`gap-1 text-white cursor-pointer ${
+                      networkInfo.compsciType === 'vpn' 
+                        ? 'bg-orange-600 hover:bg-orange-700' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}>
+                      <span className="text-xs font-medium">
+                        {networkInfo.compsciIP} ({networkInfo.compsciType})
+                      </span>
                     </Badge>
                   </a>
                 ) : (
