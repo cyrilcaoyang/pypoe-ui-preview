@@ -89,8 +89,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1a1a2e', color: 'white' }}>
-      {/* Inline styles as fallback if CSS classes fail */}
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
       <div className="flex" style={{ height: 'calc(100vh - 4rem)' }}>
         <Sidebar 
@@ -103,7 +102,7 @@ const Index = () => {
           onConversationChange={handleConversationChange}
           onChatModeChange={setChatMode}
         />
-        <main className="flex-1">
+        <main className="flex-1 bg-background">
           <ChatInterface 
             chatMode={chatMode} 
             onChatModeChange={setChatMode}
