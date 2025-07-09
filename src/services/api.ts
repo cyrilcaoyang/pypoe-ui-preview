@@ -11,10 +11,14 @@ export interface Conversation {
   id: string;
   title: string;
   bot_name: string;
+  chat_mode?: string;
   created_at: string;
   updated_at?: string;
   message_count?: number;
   last_message?: Message;
+  has_messages?: boolean;
+  bot_locked?: boolean;
+  chat_mode_locked?: boolean;
 }
 
 export interface Bot {
@@ -25,10 +29,20 @@ export interface Bot {
 
 export interface ConversationStats {
   total_conversations: number;
+  active_conversations: number;
   total_messages: number;
+  total_user_messages: number;
+  total_assistant_messages: number;
   total_words: number;
+  total_user_words: number;
+  total_assistant_words: number;
   bot_usage: Record<string, number>;
+  chat_mode_usage: Record<string, number>;
   avg_messages_per_conversation: number;
+  avg_messages_per_active_conversation: number;
+  avg_words_per_message: number;
+  avg_user_words_per_message: number;
+  avg_assistant_words_per_message: number;
 }
 
 export interface BackendConfig {
@@ -38,6 +52,24 @@ export interface BackendConfig {
   username?: string;
   available_bots: string[];
   total_bots: number;
+  network_interfaces?: {
+    tailscale?: {
+      ip: string;
+      frontend_url: string;
+      backend_url: string;
+    };
+    compsci?: {
+      ip: string;
+      frontend_url: string;
+      backend_url: string;
+    };
+    local?: {
+      ip: string;
+      frontend_url: string;
+      backend_url: string;
+    };
+    error?: string;
+  };
   api_endpoints: string[];
   cors_enabled: boolean;
   websocket_enabled: boolean;
@@ -78,10 +110,16 @@ class PyPoeAPI {
     const currentHost = window.location.hostname;
     
     if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-      // Local development - try Tailscale IP first, then localhost
+      // Local development - use localhost
+      return 'http://localhost:8000';
+    } else if (currentHost.startsWith('100.64.')) {
+      // Tailscale network - use the Tailscale IP of the backend
       return 'http://100.64.254.6:8000';
+    } else if (currentHost.startsWith('192.168.') || currentHost.startsWith('172.')) {
+      // Local network - assume backend is on same host
+      return `http://${currentHost}:8000`;
     } else {
-      // Running on server - assume backend is on same host
+      // Fallback - assume backend is on same host
       return `http://${currentHost}:8000`;
     }
   }
@@ -147,14 +185,49 @@ class PyPoeAPI {
     });
   }
 
-  async searchConversations(query?: string, bot?: string, limit?: number): Promise<Conversation[]> {
+  async searchConversations(
+    query?: string, 
+    bot?: string, 
+    chatMode?: string,
+    hasMessages?: boolean,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: string
+  ): Promise<Conversation[]> {
     const params = new URLSearchParams();
     if (query) params.append('q', query);
     if (bot) params.append('bot', bot);
+    if (chatMode) params.append('chat_mode', chatMode);
+    if (hasMessages !== undefined) params.append('has_messages', hasMessages.toString());
     if (limit) params.append('limit', limit.toString());
+    if (sortBy) params.append('sort_by', sortBy);
+    if (sortOrder) params.append('sort_order', sortOrder);
     
     const endpoint = `/api/conversations/search${params.toString() ? '?' + params.toString() : ''}`;
-    return this.request<Conversation[]>(endpoint);
+    const response = await this.request<{ conversations: Conversation[]; total_found: number; filters_applied: any }>(endpoint);
+    return response.conversations;
+  }
+
+  async searchConversationsWithMetadata(
+    query?: string, 
+    bot?: string, 
+    chatMode?: string,
+    hasMessages?: boolean,
+    limit?: number,
+    sortBy?: string,
+    sortOrder?: string
+  ): Promise<{ conversations: Conversation[]; total_found: number; filters_applied: any }> {
+    const params = new URLSearchParams();
+    if (query) params.append('q', query);
+    if (bot) params.append('bot', bot);
+    if (chatMode) params.append('chat_mode', chatMode);
+    if (hasMessages !== undefined) params.append('has_messages', hasMessages.toString());
+    if (limit) params.append('limit', limit.toString());
+    if (sortBy) params.append('sort_by', sortBy);
+    if (sortOrder) params.append('sort_order', sortOrder);
+    
+    const endpoint = `/api/conversations/search${params.toString() ? '?' + params.toString() : ''}`;
+    return this.request<{ conversations: Conversation[]; total_found: number; filters_applied: any }>(endpoint);
   }
 
   // Messages
@@ -174,8 +247,15 @@ class PyPoeAPI {
   }
 
   // Bots
-  async getAvailableBots(): Promise<string[]> {
-    return this.request<string[]>('/api/bots');
+  async getAvailableBots(conversationId?: string): Promise<string[]> {
+    const params = conversationId ? `?conversation_id=${conversationId}` : '';
+    const response = await this.request<{ bots: string[]; locking: any }>(`/api/bots${params}`);
+    return response.bots;
+  }
+
+  async getBotsWithLocking(conversationId?: string): Promise<{ bots: string[]; locking: any }> {
+    const params = conversationId ? `?conversation_id=${conversationId}` : '';
+    return this.request<{ bots: string[]; locking: any }>(`/api/bots${params}`);
   }
 
   // Stats

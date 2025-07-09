@@ -42,7 +42,7 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [selectedModel, setSelectedModel] = useState('GPT-3.5-Turbo');
+  const [selectedModel, setSelectedModel] = useState('');
   const [availableBots, setAvailableBots] = useState<string[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,11 +51,16 @@ export function ChatInterface({
   const [error, setError] = useState<string | null>(null);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   
-  // Lock bot selection during active single-bot conversations
-  const isModelLocked = chatMode === 'chatbot' && 
-                       currentConversation && 
-                       messages.length > 0 && 
-                       messages.some(m => m.role === 'user');
+  // Ref to track the complete streaming message content
+  const streamingMessageRef = useRef('');
+  
+  // Lock bot selection during active single-bot conversations or when no conversation selected
+  // For chatbot mode: lock when no conversation OR when conversation is selected
+  // For other modes: only lock when no conversation is selected
+  const isModelLocked = !selectedConversationId || (chatMode === 'chatbot' && currentConversation !== null);
+  
+  // Lock chat mode when no conversation is selected
+  const isChatModeLocked = !selectedConversationId;
   
   // New chat dialog state
   const [newChatTitle, setNewChatTitle] = useState('');
@@ -93,8 +98,8 @@ export function ChatInterface({
     try {
       const bots = await pyPoeAPI.getAvailableBots();
       setAvailableBots(bots);
-      if (bots.length > 0 && !selectedModel) {
-        setSelectedModel(bots[0]);
+      // Set default for new chat dialog only
+      if (bots.length > 0 && !newChatBot) {
         setNewChatBot(bots[0]);
       }
     } catch (err) {
@@ -176,26 +181,29 @@ export function ChatInterface({
         break;
       
       case 'bot_response_start':
+        streamingMessageRef.current = '';
         setStreamingMessage('');
         setIsLoading(true);
         break;
       
       case 'bot_response_chunk':
-        setStreamingMessage(prev => prev + data.content);
+        streamingMessageRef.current += data.content;
+        setStreamingMessage(streamingMessageRef.current);
         break;
       
       case 'bot_response_end':
-        // Add complete message to the conversation
+        // Add complete message to the conversation using the ref content
         const completeMessage: Message = {
           id: Date.now().toString(),
           conversation_id: selectedConversationId!,
           role: 'assistant',
-          content: streamingMessage,
+          content: streamingMessageRef.current, // Use ref instead of state
           timestamp: new Date().toISOString(),
           bot_name: selectedModel
         };
         setMessages(prev => [...prev, completeMessage]);
         setStreamingMessage('');
+        streamingMessageRef.current = '';
         setIsLoading(false);
         break;
       
@@ -203,12 +211,13 @@ export function ChatInterface({
         setError(data.content);
         setIsLoading(false);
         setStreamingMessage('');
+        streamingMessageRef.current = '';
         break;
     }
   };
 
   const handleSend = async () => {
-    if (!inputValue.trim() || !selectedConversationId || !wsRef.current) return;
+    if (!inputValue.trim() || !selectedConversationId || !wsRef.current || !selectedModel) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -278,8 +287,8 @@ export function ChatInterface({
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div className="flex items-center gap-3">
-              <Select value={chatMode} onValueChange={onChatModeChange}>
-                <SelectTrigger className="w-64">
+              <Select value={chatMode} onValueChange={onChatModeChange} disabled={isChatModeLocked}>
+                <SelectTrigger className={`w-64 ${isChatModeLocked ? 'opacity-60 cursor-not-allowed' : ''}`}>
                   <SelectValue>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{chatModes.find(m => m.id === chatMode)?.name}</span>
@@ -300,9 +309,14 @@ export function ChatInterface({
                   ))}
                 </SelectContent>
               </Select>
+              {isChatModeLocked && (
+                <div className="text-xs text-muted-foreground">
+                  Select a conversation first
+                </div>
+              )}
               {currentConversation && (
                 <div className="text-sm">
-                  <div className="font-medium">{currentConversation.title}</div>
+                  <div className="font-medium">Topic: {currentConversation.title}</div>
                   <div className="text-xs text-muted-foreground">
                     {isConnecting ? 'Connecting...' : 'Connected'}
                   </div>
@@ -319,9 +333,12 @@ export function ChatInterface({
               disabled={isModelLocked}
             >
               <SelectTrigger className={`w-52 ${isModelLocked ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                <SelectValue />
+                <SelectValue placeholder="Select AI Bot" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="placeholder" disabled>
+                  <span className="text-muted-foreground">Select AI Bot</span>
+                </SelectItem>
                 {availableBots.map((bot) => (
                   <SelectItem key={bot} value={bot}>
                     {bot}
@@ -331,7 +348,7 @@ export function ChatInterface({
             </Select>
             {isModelLocked && (
               <div className="text-xs text-muted-foreground">
-                Bot locked for this conversation
+                {!selectedConversationId ? 'Select a conversation first' : 'Bot locked in single chat mode'}
               </div>
             )}
             <Button variant="ghost" size="icon">
@@ -532,14 +549,14 @@ export function ChatInterface({
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={`Message ${selectedModel}...`}
+                  placeholder={selectedModel ? `Message ${selectedModel}...` : "Select AI bot to start chatting..."}
                   disabled={isLoading || !wsRef.current || isConnecting}
                   className="pr-12"
                 />
               </div>
               <Button 
                 onClick={handleSend} 
-                disabled={!inputValue.trim() || isLoading || !wsRef.current || isConnecting}
+                disabled={!inputValue.trim() || isLoading || !wsRef.current || isConnecting || !selectedModel}
                 size="icon"
               >
                 {isLoading ? (
@@ -550,7 +567,9 @@ export function ChatInterface({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              {currentConversation ? `Chatting with ${selectedModel} in "${currentConversation.title}"` : 'Select a conversation to start chatting'}
+              {currentConversation ? 
+                (selectedModel ? `Chatting with ${selectedModel} in "${currentConversation.title}"` : 'Select an AI bot to start chatting') : 
+                'Select a conversation to start chatting'}
             </p>
           </div>
         </>

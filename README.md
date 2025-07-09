@@ -1,8 +1,93 @@
-# Welcome to your Lovable project
+# PyPoe UI Preview - React Frontend
+
+A modern React frontend for the PyPoe chat interface, providing a sleek user experience for interacting with AI bots through the PyPoe backend.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/4c541f70-fe1a-4969-8ec7-50f5e33cfa12
+
+## 🌐 Network Access Configuration
+
+The React frontend is configured to bind to all network interfaces (`0.0.0.0`) and automatically detect the PyPoe backend.
+
+### **Running on All Interfaces (Recommended)**
+
+```bash
+# 1. Configure authentication (required for backend access)
+echo "VITE_PYPOE_USERNAME=YOUR_USERNAME
+VITE_PYPOE_PASSWORD=YOUR_PASSWORD" > .env.local
+
+# 2. Start the React development server
+npm run dev
+
+# The frontend will be accessible from:
+# - Localhost: http://localhost:5173
+# - Tailscale: http://100.64.x.x:5173
+# - Local Network: http://192.168.x.x:5173 or http://172.x.x.x:5173
+```
+
+> **⚠️ Security Note**: Replace `YOUR_USERNAME` and `YOUR_PASSWORD` with your actual PyPoe backend credentials.
+
+### **Backend Auto-Detection**
+
+The React frontend automatically detects the PyPoe backend URL based on the current host:
+
+- **localhost/127.0.0.1** → connects to `http://localhost:8000`
+- **100.64.x.x (Tailscale)** → connects to `http://100.64.254.6:8000`
+- **192.168.x.x/172.x.x.x (LAN)** → connects to `http://[same-host]:8000`
+
+### **Environment Configuration**
+
+Create a `.env.local` file to configure the frontend:
+
+```env
+# Backend URL (optional - uses auto-detection if not set)
+# VITE_PYPOE_BACKEND_URL=http://localhost:8000
+
+# Authentication (required)
+VITE_PYPOE_USERNAME=YOUR_USERNAME
+VITE_PYPOE_PASSWORD=YOUR_PASSWORD
+```
+
+### **Testing Network Access**
+
+```bash
+# Test frontend access from different interfaces
+curl http://localhost:5173          # Local access
+curl http://100.64.x.x:5173         # Tailscale access
+curl http://192.168.x.x:5173        # LAN access
+```
+
+## 🚀 Running with PyPoe Backend
+
+To run the complete PyPoe chat system, you need both the React frontend and PyPoe backend:
+
+```bash
+# Terminal 1: Start PyPoe Backend
+cd ../PyPoe
+conda activate pypoe-dev
+pypoe web --host 0.0.0.0 --port 8000 --web-username YOUR_USERNAME --web-password YOUR_PASSWORD
+
+# Terminal 2: Start React Frontend
+cd pypoe-ui-preview
+npm run dev
+```
+
+### **Verify Both Services**
+
+```bash
+# Test backend API (requires authentication)
+curl -u YOUR_USERNAME:YOUR_PASSWORD http://localhost:8000/api/health
+
+# Test frontend (should return HTML)
+curl http://localhost:5173
+```
+
+### **Access URLs**
+
+- **Frontend**: `http://localhost:5173` (or any network interface)
+- **Backend API**: `http://localhost:8000` (with authentication)
+- **Database**: Shared SQLite database in `PyPoe/users/history/`
 
 ## How can I edit this code?
 

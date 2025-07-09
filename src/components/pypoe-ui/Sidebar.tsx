@@ -4,6 +4,9 @@ import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { 
   MessageSquare, 
   History, 
@@ -25,20 +28,37 @@ interface SidebarProps {
   onNewConversation?: () => void;
   onSettingsOpen?: () => void;
   selectedConversationId?: string;
+  onConversationChange?: (conversationId: string) => void;
+  onChatModeChange?: (mode: string) => void;
 }
+
+const chatModes = [
+  { id: 'chatbot', name: 'Chat Bot', description: 'Single AI assistant' },
+  { id: 'group', name: 'Group Chat', description: 'Multiple AI assistants' },
+  { id: 'debate', name: 'AI Debate', description: 'Two AIs debate a topic' },
+];
 
 export function Sidebar({ 
   chatMode, 
   onConversationSelect, 
   onNewConversation,
   onSettingsOpen,
-  selectedConversationId 
+  selectedConversationId,
+  onConversationChange,
+  onChatModeChange 
 }: SidebarProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [stats, setStats] = useState<ConversationStats | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // New chat dialog state
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [newChatTitle, setNewChatTitle] = useState('');
+  const [newChatBot, setNewChatBot] = useState('');
+  const [newChatMode, setNewChatMode] = useState('chatbot');
+  const [availableBots, setAvailableBots] = useState<string[]>([]);
 
   const loadConversations = async () => {
     try {
@@ -75,6 +95,39 @@ export function Sidebar({
     }
   };
 
+  const loadAvailableBots = async () => {
+    try {
+      const bots = await pyPoeAPI.getAvailableBots();
+      setAvailableBots(bots);
+      if (bots.length > 0 && !newChatBot) {
+        setNewChatBot(bots[0]);
+      }
+    } catch (err) {
+      console.error('Failed to load bots:', err);
+    }
+  };
+
+  const handleCreateNewChat = async () => {
+    if (!newChatTitle.trim() || !newChatBot) return;
+
+    try {
+      const response = await pyPoeAPI.createConversation(newChatTitle, newChatBot);
+      setShowNewChatDialog(false);
+      setNewChatTitle('');
+      setNewChatBot('');
+      
+      // Apply the selected chat mode for the new conversation
+      onChatModeChange?.(newChatMode);
+      onConversationChange?.(response.conversation_id);
+      
+      // Refresh the conversations list
+      loadConversations();
+    } catch (err) {
+      console.error('Failed to create conversation:', err);
+      setError('Failed to create new conversation');
+    }
+  };
+
   const formatTimeAgo = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -90,6 +143,7 @@ export function Sidebar({
 
   useEffect(() => {
     loadConversations();
+    loadAvailableBots();
   }, []);
 
   if (error) {
@@ -177,28 +231,94 @@ export function Sidebar({
               className="pl-9"
             />
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full"
-            onClick={onNewConversation}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Chat
-          </Button>
+          <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                              >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Conversation
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Conversation</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    value={newChatTitle}
+                    onChange={(e) => setNewChatTitle(e.target.value)}
+                    placeholder="Enter conversation title"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="chatMode">Chat Mode</Label>
+                  <Select value={newChatMode} onValueChange={setNewChatMode}>
+                    <SelectTrigger>
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{chatModes.find(m => m.id === newChatMode)?.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {chatModes.find(m => m.id === newChatMode)?.description}
+                          </span>
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {chatModes.map((mode) => (
+                        <SelectItem key={mode.id} value={mode.id}>
+                          <div>
+                            <div className="font-medium">{mode.name}</div>
+                            <div className="text-xs text-muted-foreground">{mode.description}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="bot">AI Bot</Label>
+                  <Select value={newChatBot} onValueChange={setNewChatBot}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a bot" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableBots.map((bot) => (
+                        <SelectItem key={bot} value={bot}>
+                          {bot}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  onClick={handleCreateNewChat} 
+                  className="w-full"
+                  disabled={!newChatTitle.trim() || !newChatBot}
+                >
+                  Create Conversation
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       {/* Recent Conversations */}
-      <div className="flex-1 p-4">
+      <div className="flex-1 flex flex-col p-4 min-h-0">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium">Recent Chats</h3>
+          <h3 className="text-sm font-medium">Recent Conversations</h3>
           <Button variant="ghost" size="sm" onClick={loadConversations}>
             <History className="h-4 w-4" />
           </Button>
         </div>
         
-        <ScrollArea className="h-full">
+        <ScrollArea className="flex-1">
           {isLoading ? (
             <div className="space-y-2">
               {[1, 2, 3, 4, 5].map((i) => (
