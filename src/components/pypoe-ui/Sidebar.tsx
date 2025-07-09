@@ -17,7 +17,8 @@ import {
   FileText,
   Terminal,
   Plus,
-  Search
+  Search,
+  Database
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { pyPoeAPI, type Conversation, type ConversationStats } from '@/services/api';
@@ -27,6 +28,7 @@ interface SidebarProps {
   onConversationSelect?: (conversationId: string) => void;
   onNewConversation?: () => void;
   onSettingsOpen?: () => void;
+  onStorageOpen?: () => void;
   selectedConversationId?: string;
   onConversationChange?: (conversationId: string) => void;
   onChatModeChange?: (mode: string) => void;
@@ -43,6 +45,7 @@ export function Sidebar({
   onConversationSelect, 
   onNewConversation,
   onSettingsOpen,
+  onStorageOpen,
   selectedConversationId,
   onConversationChange,
   onChatModeChange 
@@ -377,6 +380,10 @@ export function Sidebar({
           <Button variant="ghost" size="sm" className="w-full justify-start">
             <Terminal className="h-4 w-4" />
             CLI Version
+          </Button>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onStorageOpen}>
+            <Database className="h-4 w-4" />
+            Storage
           </Button>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onSettingsOpen}>
             <Settings className="h-4 w-4" />

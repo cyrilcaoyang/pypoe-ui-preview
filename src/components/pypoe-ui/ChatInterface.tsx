@@ -277,6 +277,61 @@ export function ChatInterface({
     });
   };
 
+  const processContentForDisplay = (content: string) => {
+    if (!content) return content;
+    
+    // Convert markdown images to clickable links
+    const imagePattern = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    return content.replace(imagePattern, (match, altText, url) => {
+      const displayText = altText || 'Generated Image';
+      return `🖼️ ${displayText}`;
+    });
+  };
+
+  const extractImageUrls = (content: string): Array<{alt: string, url: string}> => {
+    const imagePattern = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    const images: Array<{alt: string, url: string}> = [];
+    let match;
+    
+    while ((match = imagePattern.exec(content)) !== null) {
+      images.push({
+        alt: match[1] || 'Generated Image',
+        url: match[2]
+      });
+    }
+    
+    return images;
+  };
+
+  const MessageContent = ({ content, className = "" }: { content: string; className?: string }) => {
+    const processedContent = processContentForDisplay(content);
+    const images = extractImageUrls(content);
+    
+    return (
+      <div className={className}>
+        <div className="whitespace-pre-wrap text-sm leading-relaxed">
+          {processedContent}
+        </div>
+        {images.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {images.map((image, index) => (
+              <a
+                key={index}
+                href={image.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                title="Click to open image in new tab"
+              >
+                🖼️ {image.alt}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header - Always visible */}
@@ -476,9 +531,7 @@ export function ChatInterface({
                       
                       <div className={`max-w-[80%] ${message.role === 'user' ? 'order-2' : ''}`}>
                         <Card className={`p-4 ${message.role === 'user' ? 'bg-primary text-primary-foreground ml-auto' : 'bg-card'}`}>
-                          <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                            {message.content}
-                          </div>
+                          <MessageContent content={message.content} />
                           {message.role === 'assistant' && (
                             <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
                               <div className="flex items-center gap-2">
@@ -528,10 +581,8 @@ export function ChatInterface({
                         <Bot className="h-4 w-4 text-white" />
                       </div>
                       <Card className="p-4 bg-card max-w-[80%]">
-                        <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                          {streamingMessage}
-                          <span className="animate-pulse">|</span>
-                        </div>
+                        <MessageContent content={streamingMessage} />
+                        <span className="animate-pulse ml-1">|</span>
                       </Card>
                     </div>
                   )}

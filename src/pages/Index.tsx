@@ -3,6 +3,7 @@ import { Header } from '@/components/pypoe-ui/Header';
 import { Sidebar } from '@/components/pypoe-ui/Sidebar';
 import { ChatInterface } from '@/components/pypoe-ui/ChatInterface';
 import Settings from '@/components/Settings';
+import { StorageManager } from '@/components/StorageManager';
 import { pyPoeAPI } from '@/services/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -11,6 +12,7 @@ const Index = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>(undefined);
   const [sidebarKey, setSidebarKey] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const [showStorage, setShowStorage] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
 
   // Handle conversation selection from sidebar
@@ -32,6 +34,11 @@ const Index = () => {
   // Handle settings modal
   const handleSettingsOpen = () => {
     setShowSettings(true);
+  };
+
+  // Handle storage modal
+  const handleStorageOpen = () => {
+    setShowStorage(true);
   };
 
   // Test backend connection on mount
@@ -98,6 +105,7 @@ const Index = () => {
           onConversationSelect={handleConversationSelect}
           onNewConversation={handleNewConversation}
           onSettingsOpen={handleSettingsOpen}
+          onStorageOpen={handleStorageOpen}
           selectedConversationId={selectedConversationId}
           onConversationChange={handleConversationChange}
           onChatModeChange={setChatMode}
@@ -119,6 +127,16 @@ const Index = () => {
             <DialogTitle>Settings & Backend Configuration</DialogTitle>
           </DialogHeader>
           <Settings />
+        </DialogContent>
+      </Dialog>
+
+      {/* Storage Management Modal */}
+      <Dialog open={showStorage} onOpenChange={setShowStorage}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Storage Management</DialogTitle>
+          </DialogHeader>
+          <StorageManager />
         </DialogContent>
       </Dialog>
       
