@@ -59,8 +59,8 @@ export function ChatInterface({
   // For other modes: only lock when no conversation is selected
   const isModelLocked = !selectedConversationId || (chatMode === 'chatbot' && currentConversation !== null);
   
-  // Lock chat mode when no conversation is selected
-  const isChatModeLocked = !selectedConversationId;
+  // Lock chat mode dropdown until other modes are implemented
+  const isChatModeLocked = true;
   
   // New chat dialog state
   const [newChatTitle, setNewChatTitle] = useState('');
@@ -364,11 +364,7 @@ export function ChatInterface({
                   ))}
                 </SelectContent>
               </Select>
-              {isChatModeLocked && (
-                <div className="text-xs text-muted-foreground">
-                  Select a conversation first
-                </div>
-              )}
+
               {currentConversation && (
                 <div className="text-sm">
                   <div className="font-medium">Topic: {currentConversation.title}</div>
@@ -401,11 +397,7 @@ export function ChatInterface({
                 ))}
               </SelectContent>
             </Select>
-            {isModelLocked && (
-              <div className="text-xs text-muted-foreground">
-                {!selectedConversationId ? 'Select a conversation first' : 'Bot locked in single chat mode'}
-              </div>
-            )}
+
             <Button variant="ghost" size="icon">
               <Settings2 className="h-4 w-4" />
             </Button>
@@ -459,8 +451,8 @@ export function ChatInterface({
                   </div>
                   <div>
                     <Label htmlFor="chatMode">Chat Mode</Label>
-                    <Select value={newChatMode} onValueChange={setNewChatMode}>
-                      <SelectTrigger>
+                    <Select value={newChatMode} onValueChange={setNewChatMode} disabled={true}>
+                      <SelectTrigger className="opacity-60 cursor-not-allowed">
                         <SelectValue>
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{chatModes.find(m => m.id === newChatMode)?.name}</span>

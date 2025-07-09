@@ -122,8 +122,8 @@ class PyPoeAPI {
       // Local development - use localhost
       return 'http://localhost:8000';
     } else if (currentHost.startsWith('100.64.')) {
-      // Tailscale network - use the Tailscale IP of the backend
-      return 'http://100.64.254.6:8000';
+      // Tailscale network - backend should be on the same Tailscale node
+      return `http://${currentHost}:8000`;
     } else if (currentHost.startsWith('192.168.') || currentHost.startsWith('172.')) {
       // Local network - assume backend is on same host
       return `http://${currentHost}:8000`;

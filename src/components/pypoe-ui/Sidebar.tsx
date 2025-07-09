@@ -261,8 +261,8 @@ export function Sidebar({
                 </div>
                 <div>
                   <Label htmlFor="chatMode">Chat Mode</Label>
-                  <Select value={newChatMode} onValueChange={setNewChatMode}>
-                    <SelectTrigger>
+                  <Select value={newChatMode} onValueChange={setNewChatMode} disabled={true}>
+                    <SelectTrigger className="opacity-60 cursor-not-allowed">
                       <SelectValue>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{chatModes.find(m => m.id === newChatMode)?.name}</span>

@@ -207,7 +207,18 @@ export function Header() {
                 className="flex items-center gap-2"
               >
                 <Github className="h-4 w-4" />
-                GitHub
+                PyPoe
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a 
+                href="https://github.com/cyrilcaoyang/pypoe-ui-preview.git" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2"
+              >
+                <Github className="h-4 w-4" />
+                UI
               </a>
             </Button>
           </div>
