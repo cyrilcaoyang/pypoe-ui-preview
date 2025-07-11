@@ -87,7 +87,7 @@ const Settings: React.FC = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Version:</span>
-                <span className="text-sm text-gray-600">{config?.backend_version}</span>
+                <span className="text-sm text-muted-foreground">{config?.backend_version}</span>
               </div>
             </div>
             <div className="space-y-2">
@@ -129,7 +129,7 @@ const Settings: React.FC = () => {
             {config?.authentication_enabled && config?.username && (
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Username:</span>
-                <span className="text-sm text-gray-600">{config.username}</span>
+                <span className="text-sm text-muted-foreground">{config.username}</span>
               </div>
             )}
           </div>
@@ -149,7 +149,7 @@ const Settings: React.FC = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Database Path:</span>
-              <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+              <code className="text-xs bg-muted px-2 py-1 rounded text-muted-foreground">
                 {config?.database_path}
               </code>
             </div>
@@ -216,7 +216,7 @@ const Settings: React.FC = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {config?.api_endpoints.map((endpoint, index) => (
-              <code key={index} className="text-xs bg-gray-100 px-2 py-1 rounded block">
+              <code key={index} className="text-xs bg-muted px-2 py-1 rounded block text-muted-foreground">
                 {endpoint}
               </code>
             ))}

@@ -1,62 +1,6 @@
-# PyPoe UI Preview - React Frontend
+# PyPoe Frontend - A React Frontend
 
 A modern React frontend for the PyPoe chat interface, providing a sleek user experience for interacting with AI bots through the PyPoe backend.
-
-## Project info
-
-**URL**: https://lovable.dev/projects/4c541f70-fe1a-4969-8ec7-50f5e33cfa12
-
-## 🌐 Network Access Configuration
-
-The React frontend is configured to bind to all network interfaces (`0.0.0.0`) and automatically detect the PyPoe backend.
-
-### **Running on All Interfaces (Recommended)**
-
-```bash
-# 1. Configure authentication (required for backend access)
-echo "VITE_PYPOE_USERNAME=YOUR_USERNAME
-VITE_PYPOE_PASSWORD=YOUR_PASSWORD" > .env.local
-
-# 2. Start the React development server
-npm run dev
-
-# The frontend will be accessible from:
-# - Localhost: http://localhost:5173
-# - Tailscale: http://100.64.x.x:5173
-# - Local Network: http://192.168.x.x:5173 or http://172.x.x.x:5173
-```
-
-> **⚠️ Security Note**: Replace `YOUR_USERNAME` and `YOUR_PASSWORD` with your actual PyPoe backend credentials.
-
-### **Backend Auto-Detection**
-
-The React frontend automatically detects the PyPoe backend URL based on the current host:
-
-- **localhost/127.0.0.1** → connects to `http://localhost:8000`
-- **100.64.x.x (Tailscale)** → connects to `http://100.64.254.6:8000`
-- **192.168.x.x/172.x.x.x (LAN)** → connects to `http://[same-host]:8000`
-
-### **Environment Configuration**
-
-Create a `.env.local` file to configure the frontend:
-
-```env
-# Backend URL (optional - uses auto-detection if not set)
-# VITE_PYPOE_BACKEND_URL=http://localhost:8000
-
-# Authentication (required)
-VITE_PYPOE_USERNAME=YOUR_USERNAME
-VITE_PYPOE_PASSWORD=YOUR_PASSWORD
-```
-
-### **Testing Network Access**
-
-```bash
-# Test frontend access from different interfaces
-curl http://localhost:5173          # Local access
-curl http://100.64.x.x:5173         # Tailscale access
-curl http://192.168.x.x:5173        # LAN access
-```
 
 ## 🚀 Running with PyPoe Backend
 
@@ -69,7 +13,7 @@ conda activate pypoe-dev
 pypoe web --host 0.0.0.0 --port 8000 --web-username YOUR_USERNAME --web-password YOUR_PASSWORD
 
 # Terminal 2: Start React Frontend
-cd pypoe-ui-preview
+cd pypoe-frontend
 npm run dev
 ```
 
@@ -89,19 +33,131 @@ curl http://localhost:5173
 - **Backend API**: `http://localhost:8000` (with authentication)
 - **Database**: Shared SQLite database in `PyPoe/users/history/`
 
-## How can I edit this code?
+## 🔧 Running as a Background Service (Daemon)
 
-There are several ways of editing your application.
+For production deployments or when you want the frontend to persist after SSH disconnection, you can run it as a background service.
 
-**Use Lovable**
+### **Option 1: Simple Background with nohup (Easiest)**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4c541f70-fe1a-4969-8ec7-50f5e33cfa12) and start prompting.
+```bash
+# Start in background (survives SSH disconnection)
+nohup npm run dev > ~/pypoe-frontend.log 2>&1 &
 
-Changes made via Lovable will be committed automatically to this repo.
+# The command breakdown:
+# nohup = prevents termination when SSH session ends
+# npm run dev = starts the frontend server
+# > ~/pypoe-frontend.log = redirects output to log file
+# 2>&1 = redirects errors to same log file
+# & = runs in background
 
-**Use your preferred IDE**
+# Check if running
+ps aux | grep "npm run dev"
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# View logs
+tail -f ~/pypoe-frontend.log
+
+# Stop the process
+kill $(ps aux | grep "npm run dev" | grep -v grep | awk '{print $2}')
+```
+
+### **Option 2: Using screen (Recommended for Development)**
+
+```bash
+# Install screen (if not available)
+sudo apt install screen
+
+# Create a new screen session
+screen -S pypoe-frontend
+
+# Inside the screen session, start the frontend
+npm run dev
+
+# Detach from screen (keeps running) - Press: Ctrl+A, then D
+
+# To reconnect later
+screen -r pypoe-frontend
+
+# List all screen sessions
+screen -ls
+```
+
+### **Option 3: Using tmux (Alternative to screen)**
+
+```bash
+# Install tmux
+sudo apt install tmux
+
+# Create new session and run frontend
+tmux new-session -d -s pypoe-frontend "cd $(pwd) && npm run dev"
+
+# Attach to session
+tmux attach-session -t pypoe-frontend
+
+# Detach: Ctrl+B, then D
+```
+
+### **Option 4: Systemd Service (Production Ready)**
+
+Create a systemd service for automatic startup and management:
+
+```bash
+# Create service file
+sudo tee /etc/systemd/system/pypoe-frontend.service > /dev/null <<EOF
+[Unit]
+Description=PyPoe Frontend Web Interface
+After=network.target
+
+[Service]
+Type=simple
+User=$(whoami)
+WorkingDirectory=$(pwd)
+Environment=NODE_ENV=production
+ExecStart=$(which npm) run dev
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=pypoe-frontend
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable and start the service
+sudo systemctl daemon-reload
+sudo systemctl enable pypoe-frontend
+sudo systemctl start pypoe-frontend
+
+# Check status
+sudo systemctl status pypoe-frontend
+
+# View logs
+sudo journalctl -u pypoe-frontend -f
+
+# Stop/start/restart
+sudo systemctl stop pypoe-frontend
+sudo systemctl start pypoe-frontend
+sudo systemctl restart pypoe-frontend
+```
+
+### **Managing Background Processes**
+
+```bash
+# Save PID for easy management
+nohup npm run dev > ~/pypoe-frontend.log 2>&1 & echo $! > ~/pypoe-frontend.pid
+
+# Stop using saved PID
+kill $(cat ~/pypoe-frontend.pid) && rm ~/pypoe-frontend.pid
+
+# Or kill all node processes (be careful!)
+pkill node
+```
+
+## How to work with this project
+
+If you want to work locally using your own IDE, you can clone this repo and push changes.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -121,20 +177,6 @@ npm i
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
 ## What technologies are used for this project?
 
 This project is built with:
@@ -144,15 +186,3 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/4c541f70-fe1a-4969-8ec7-50f5e33cfa12) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)

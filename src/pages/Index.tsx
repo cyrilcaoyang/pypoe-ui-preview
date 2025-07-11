@@ -97,7 +97,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
+      <Header onSettingsOpen={handleSettingsOpen} />
       <div className="flex" style={{ height: 'calc(100vh - 4rem)' }}>
         <Sidebar 
           key={sidebarKey}
