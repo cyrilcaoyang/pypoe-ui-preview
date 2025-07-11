@@ -1,13 +1,17 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Github, Settings, Zap, WifiOff, Sun, Moon } from 'lucide-react';
+import { Settings, Zap, WifiOff, Sun, Moon } from 'lucide-react';
 import accelerationLogo from '@/assets/acceleration-consortium-logo.png';
 import lightThemeLogo from '@/assets/light-theme-logo.svg';
 import { useState, useEffect } from 'react';
 import { pyPoeAPI } from '@/services/api';
 
-export function Header() {
+interface HeaderProps {
+  onSettingsOpen?: () => void;
+}
+
+export function Header({ onSettingsOpen }: HeaderProps = {}) {
   // Theme state with actual functionality
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [networkInfo, setNetworkInfo] = useState({
@@ -196,30 +200,8 @@ export function Header() {
                 className="data-[state=checked]:bg-primary"
               />
             </div>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={onSettingsOpen}>
               <Settings className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <a 
-                href="https://github.com/cyrilcaoyang/PyPoe" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <Github className="h-4 w-4" />
-                PyPoe
-              </a>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <a 
-                href="https://github.com/cyrilcaoyang/pypoe-ui-preview.git" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <Github className="h-4 w-4" />
-                UI
-              </a>
             </Button>
           </div>
         </div>

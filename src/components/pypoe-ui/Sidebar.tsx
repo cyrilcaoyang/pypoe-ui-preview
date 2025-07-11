@@ -18,7 +18,8 @@ import {
   Terminal,
   Plus,
   Search,
-  Database
+  Database,
+  Github
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { pyPoeAPI, type Conversation, type ConversationStats } from '@/services/api';
@@ -373,17 +374,27 @@ export function Sidebar({
       {/* Footer Actions */}
       <div className="p-4 border-t border-border">
         <div className="space-y-2">
-          <Button variant="ghost" size="sm" className="w-full justify-start">
-            <FileText className="h-4 w-4" />
-            Documentation
+          <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+            <a 
+              href="https://github.com/cyrilcaoyang/PyPoe" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2"
+            >
+              <Github className="h-4 w-4" />
+              PyPoe
+            </a>
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start">
-            <Terminal className="h-4 w-4" />
-            CLI Version
-          </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onStorageOpen}>
-            <Database className="h-4 w-4" />
-            Storage
+          <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+            <a 
+              href="https://github.com/cyrilcaoyang/pypoe-frontend.git" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2"
+            >
+              <Github className="h-4 w-4" />
+              UI
+            </a>
           </Button>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onSettingsOpen}>
             <Settings className="h-4 w-4" />
